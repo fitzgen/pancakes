@@ -1,5 +1,6 @@
 //! Machine words that are tagged valid or invalid.
 
+use std::mem;
 use std::num::Wrapping;
 use std::ops;
 
@@ -34,6 +35,16 @@ impl TaggedWord {
     /// Is this tagged word invalid?
     pub fn is_invalid(&self) -> bool {
         !self.is_valid()
+    }
+
+    /// If we treat this word as a pointer, is it pointing to something that is
+    /// aligned on a word boundary?
+    ///
+    /// Invalid words are never considered word aligned.
+    pub fn is_word_aligned(&self) -> bool {
+        self.0
+            .map(|w| w & (mem::size_of::<usize>() - 1) == 0)
+            .unwrap_or(false)
     }
 
     /// Invoke `f` on the inner word if it is valid and return a new, valid
@@ -223,5 +234,11 @@ mod tests {
                    TaggedWord::invalid());
         assert_eq!(TaggedWord::invalid() + TaggedWord::invalid(),
                    TaggedWord::invalid());
+    }
+
+    #[test]
+    fn test_is_word_aligned() {
+        assert!(TaggedWord::valid(mem::size_of::<usize>() * 1024).is_word_aligned());
+        assert!(!TaggedWord::valid(1).is_word_aligned());
     }
 }
