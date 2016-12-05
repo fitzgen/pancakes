@@ -196,7 +196,8 @@ impl_shift_assign!(ShlAssign, shl_assign, Shl, x, y, x << y);
 #[cfg(test)]
 mod tests {
     use super::*;
-
+    use std::mem;
+    
     #[test]
     fn test_map_valid() {
         assert_eq!(TaggedWord::valid(5).map(|x| x + 1), TaggedWord::valid(6));
