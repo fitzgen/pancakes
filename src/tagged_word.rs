@@ -28,11 +28,13 @@ impl TaggedWord {
     }
 
     /// Is this tagged word valid?
+    #[inline]
     pub fn is_valid(&self) -> bool {
         self.0.is_some()
     }
 
     /// Is this tagged word invalid?
+    #[inline]
     pub fn is_invalid(&self) -> bool {
         !self.is_valid()
     }
@@ -41,6 +43,7 @@ impl TaggedWord {
     /// aligned on a word boundary?
     ///
     /// Invalid words are never considered word aligned.
+    #[inline]
     pub fn is_word_aligned(&self) -> bool {
         self.0
             .map(|w| w & (mem::size_of::<usize>() - 1) == 0)
@@ -197,7 +200,7 @@ impl_shift_assign!(ShlAssign, shl_assign, Shl, x, y, x << y);
 mod tests {
     use super::*;
     use std::mem;
-    
+
     #[test]
     fn test_map_valid() {
         assert_eq!(TaggedWord::valid(5).map(|x| x + 1), TaggedWord::valid(6));
