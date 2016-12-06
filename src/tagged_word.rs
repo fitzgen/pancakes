@@ -1,5 +1,6 @@
 //! Machine words that are tagged valid or invalid.
 
+use error;
 use std::mem;
 use std::num::Wrapping;
 use std::ops;
@@ -69,6 +70,16 @@ impl TaggedWord {
         match self.0 {
             Some(word) => f(word),
             None => TaggedWord(None),
+        }
+    }
+}
+
+impl Into<error::Result<usize>> for TaggedWord {
+    fn into(self) -> error::Result<usize> {
+        if let Some(word) = self.0 {
+            Ok(word)
+        } else {
+            Err(error::Error::InvalidTaggedWord)
         }
     }
 }
@@ -192,7 +203,6 @@ impl_shift_assign!(ShlAssign, shl_assign, Shl, x, y, x << y);
 // TODO impl Octal
 // TODO impl FromStr
 // TODO impl Product
-// TODO impl From
 // TODO impl Sum
 // TODO impl LowerHex
 

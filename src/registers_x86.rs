@@ -2,6 +2,9 @@
 
 use tagged_word;
 
+// TODO FITZGEN: split this into full unwinding and fast unwinding with all
+// registers vs the minimal set respectively.
+
 /// The registers needed to unwind a frame on x86.
 #[derive(Clone, Copy, Debug)]
 pub struct FrameUnwindRegisters {
