@@ -56,7 +56,8 @@ impl TaggedWord {
     /// invalid `TaggedWord`.
     #[inline]
     pub fn map<F>(self, f: F) -> TaggedWord
-        where F: FnMut(usize) -> usize
+    where
+        F: FnMut(usize) -> usize,
     {
         TaggedWord(self.0.map(f))
     }
@@ -65,7 +66,8 @@ impl TaggedWord {
     /// the inner word is invalid, return another invalid word.
     #[inline]
     pub fn and_then<F>(self, mut f: F) -> TaggedWord
-        where F: FnMut(usize) -> TaggedWord
+    where
+        F: FnMut(usize) -> TaggedWord,
     {
         match self.0 {
             Some(word) => f(word),
@@ -218,36 +220,50 @@ mod tests {
 
     #[test]
     fn test_map_invalid() {
-        assert_eq!(TaggedWord::invalid().map(|_| unreachable!()),
-                   TaggedWord::invalid());
+        assert_eq!(
+            TaggedWord::invalid().map(|_| unreachable!()),
+            TaggedWord::invalid()
+        );
     }
 
     #[test]
     fn test_and_then_valid() {
-        assert_eq!(TaggedWord::valid(5).and_then(|x| TaggedWord::valid(x + 1)),
-                   TaggedWord::valid(6));
+        assert_eq!(
+            TaggedWord::valid(5).and_then(|x| TaggedWord::valid(x + 1)),
+            TaggedWord::valid(6)
+        );
     }
 
     #[test]
     fn test_and_then_invalid() {
-        assert_eq!(TaggedWord::invalid().and_then(|_| unreachable!()),
-                   TaggedWord::invalid());
+        assert_eq!(
+            TaggedWord::invalid().and_then(|_| unreachable!()),
+            TaggedWord::invalid()
+        );
     }
 
     #[test]
     fn test_add_valid() {
-        assert_eq!(TaggedWord::valid(1) + TaggedWord::valid(2),
-                   TaggedWord::valid(3));
+        assert_eq!(
+            TaggedWord::valid(1) + TaggedWord::valid(2),
+            TaggedWord::valid(3)
+        );
     }
 
     #[test]
     fn test_add_invalid() {
-        assert_eq!(TaggedWord::valid(1) + TaggedWord::invalid(),
-                   TaggedWord::invalid());
-        assert_eq!(TaggedWord::invalid() + TaggedWord::valid(1),
-                   TaggedWord::invalid());
-        assert_eq!(TaggedWord::invalid() + TaggedWord::invalid(),
-                   TaggedWord::invalid());
+        assert_eq!(
+            TaggedWord::valid(1) + TaggedWord::invalid(),
+            TaggedWord::invalid()
+        );
+        assert_eq!(
+            TaggedWord::invalid() + TaggedWord::valid(1),
+            TaggedWord::invalid()
+        );
+        assert_eq!(
+            TaggedWord::invalid() + TaggedWord::invalid(),
+            TaggedWord::invalid()
+        );
     }
 
     #[test]

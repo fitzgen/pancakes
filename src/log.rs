@@ -33,7 +33,11 @@ impl Write for IgnoreLogs {
     }
 }
 
-impl<T> UnwindLogger for T where T: Debug + Write + Sized {}
+impl<T> UnwindLogger for T
+where
+    T: Debug + Write + Sized,
+{
+}
 
 #[cfg(test)]
 mod tests {

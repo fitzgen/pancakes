@@ -1,10 +1,8 @@
 //! # `pancakes`
 //!
 //! TODO FITZGEN
-
 #![deny(missing_debug_implementations)]
 #![deny(missing_docs)]
-#![deny(warnings)]
 
 extern crate gimli;
 extern crate findshlibs;
@@ -55,7 +53,8 @@ impl UnwinderOptions {
 
     /// Add many mappings.
     pub fn add_mappings<I>(mut self, mappings: I) -> UnwinderOptions
-        where I: IntoIterator<Item = Mapping>
+    where
+        I: IntoIterator<Item = Mapping>,
     {
         for mapping in mappings {
             self = self.add_mapping(mapping);
@@ -88,7 +87,8 @@ impl UnwinderOptions {
     /// Finish configuring unwinding and create the `Unwinder` object with the
     /// configured options and the given logger.
     pub fn build_with_logger<Logger>(self, logger: Logger) -> Unwinder<Logger>
-        where Logger: log::UnwindLogger
+    where
+        Logger: log::UnwindLogger,
     {
         Unwinder {
             opts: self,
@@ -106,14 +106,16 @@ impl UnwinderOptions {
 /// THIS WILL NOT MALLOC OR ACQUIRE LOCKS!! IT MUST BE SIGNAL SAFE!!
 #[derive(Debug)]
 pub struct Unwinder<Logger = log::IgnoreLogs>
-    where Logger: log::UnwindLogger
+where
+    Logger: log::UnwindLogger,
 {
     opts: UnwinderOptions,
     logger: Logger,
 }
 
 impl<Logger> Unwinder<Logger>
-    where Logger: log::UnwindLogger
+where
+    Logger: log::UnwindLogger,
 {
     /// Reconfigure this `Unwinder`.
     ///
@@ -141,9 +143,10 @@ impl<Logger> Unwinder<Logger>
     }
 
     /// Unwind a single physical frame.
-    pub fn unwind_one(&self,
-                      start_regs: registers::FrameUnwindRegisters)
-                      -> error::Result<registers::FrameUnwindRegisters> {
+    pub fn unwind_one(
+        &self,
+        start_regs: registers::FrameUnwindRegisters,
+    ) -> error::Result<registers::FrameUnwindRegisters> {
         // TODO FITZGEN
         Ok(start_regs)
     }
@@ -173,12 +176,14 @@ impl<Logger> Unwinder<Logger>
     /// let _ = result;
     /// # }
     /// ```
-    pub fn unwind<F, T>(&self,
-                        _start_regs: registers::FrameUnwindRegisters,
-                        _f: F)
-                        -> error::Result<T>
-        where F: FnMut(&registers::FrameUnwindRegisters) -> T,
-              T: control::AsUnwindControl
+    pub fn unwind<F, T>(
+        &self,
+        _start_regs: registers::FrameUnwindRegisters,
+        _f: F,
+    ) -> error::Result<T>
+    where
+        F: FnMut(&registers::FrameUnwindRegisters) -> T,
+        T: control::AsUnwindControl,
     {
         unimplemented!()
     }
