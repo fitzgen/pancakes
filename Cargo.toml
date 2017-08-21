@@ -8,8 +8,16 @@ repository = "https://github.com/fitzgen/pancakes"
 version = "0.1.0"
 
 [dependencies]
-findshlibs = "0.2.0"
-gimli = "0.9.0"
+cfg-if = "0.1.2"
+
+[dependencies.findshlibs]
+path = "../findshlibs"
+
+[dependencies.gimli]
+path = "../gimli"
+
+[dev-dependencies]
+diff = "0.1.10"
 
 [features]
 nightly = []

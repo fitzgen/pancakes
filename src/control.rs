@@ -1,18 +1,18 @@
 //! Control flow for continuing or halting unwinding.
 
-/// TODO FITZGEN
+/// Whether to continue unwinding or stop.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum UnwindControl {
-    /// TODO FITZGEN
+    /// Continue unwinding.
     Continue,
 
-    /// TODO FITZGEN
+    /// Stop unwinding.
     Break,
 }
 
-/// TODO FITZGEN
+/// A trait for types that can be interpreted as an `UnwindControl`.
 pub trait AsUnwindControl {
-    /// TODO FITZGEN
+    /// Interpret this value as an `UnwindControl`.
     fn as_unwind_control(&self) -> UnwindControl {
         UnwindControl::Continue
     }

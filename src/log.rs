@@ -3,6 +3,7 @@
 use std::fmt::Debug;
 use std::io::{self, Write};
 
+#[allow(unused_macros)]
 macro_rules! log {
     ( $ logger : expr , $ fmt : expr ) => {
         use ::std::io::Write;

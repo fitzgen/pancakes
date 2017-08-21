@@ -7,11 +7,18 @@ use std::ops;
 
 /// A machine word that is tagged with whether it is valid or not.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub struct TaggedWord(Option<usize>);
+pub enum TaggedWord {
+    /// A valid word.
+    Valid(usize),
+    /// An invalid word.
+    Invalid,
+}
+
+use TaggedWord::*;
 
 impl Default for TaggedWord {
     fn default() -> TaggedWord {
-        TaggedWord(None)
+        Invalid
     }
 }
 
@@ -19,7 +26,7 @@ impl TaggedWord {
     /// Construct a new, valid `TaggedWord`.
     #[inline]
     pub fn valid(word: usize) -> TaggedWord {
-        TaggedWord(Some(word))
+        Valid(word)
     }
 
     /// Construct a new, invalid `TaggedWord`.
@@ -31,7 +38,10 @@ impl TaggedWord {
     /// Is this tagged word valid?
     #[inline]
     pub fn is_valid(&self) -> bool {
-        self.0.is_some()
+        match *self {
+            Valid(_) => true,
+            Invalid => false,
+        }
     }
 
     /// Is this tagged word invalid?
@@ -46,20 +56,34 @@ impl TaggedWord {
     /// Invalid words are never considered word aligned.
     #[inline]
     pub fn is_word_aligned(&self) -> bool {
-        self.0
-            .map(|w| w & (mem::size_of::<usize>() - 1) == 0)
-            .unwrap_or(false)
+        self.map_or(false, |w| w & (mem::size_of::<usize>() - 1) == 0)
     }
 
     /// Invoke `f` on the inner word if it is valid and return a new, valid
     /// `TaggedWord` of the result. If the inner word is invalid, return an
     /// invalid `TaggedWord`.
     #[inline]
-    pub fn map<F>(self, f: F) -> TaggedWord
+    pub fn map<F>(self, mut f: F) -> TaggedWord
     where
         F: FnMut(usize) -> usize,
     {
-        TaggedWord(self.0.map(f))
+        match self {
+            Valid(w) => Valid(f(w)),
+            Invalid => Invalid,
+        }
+    }
+
+    /// Invoke `f` on the inner word if it is valid and return the result. If
+    /// the word is invalid, return the given default value.
+    #[inline]
+    pub fn map_or<T, F>(self, default: T, mut f: F) -> T
+    where
+        F: FnMut(usize) -> T,
+    {
+        match self {
+            Valid(w) => f(w),
+            Invalid => default,
+        }
     }
 
     /// If the inner word is valid, invoke `f` on it and return the result. If
@@ -69,19 +93,32 @@ impl TaggedWord {
     where
         F: FnMut(usize) -> TaggedWord,
     {
-        match self.0 {
-            Some(word) => f(word),
-            None => TaggedWord(None),
+        match self {
+            Valid(word) => f(word),
+            Invalid => Invalid,
+        }
+    }
+
+    /// TODO FITZGEN
+    pub fn unwrap_or(self, default: usize) -> usize {
+        match self {
+            Valid(w) => w,
+            Invalid => default,
         }
     }
 }
 
-impl Into<error::Result<usize>> for TaggedWord {
-    fn into(self) -> error::Result<usize> {
-        if let Some(word) = self.0 {
-            Ok(word)
-        } else {
-            Err(error::Error::InvalidTaggedWord)
+impl<E> From<Result<usize, E>> for TaggedWord {
+    fn from(r: Result<usize, E>) -> TaggedWord {
+        r.ok().map_or_else(TaggedWord::invalid, TaggedWord::valid)
+    }
+}
+
+impl From<TaggedWord> for error::Result<usize> {
+    fn from(w: TaggedWord) -> error::Result<usize> {
+        match w {
+            Valid(w) => Ok(w),
+            Invalid => Err(error::Error::InvalidTaggedWord),
         }
     }
 }
@@ -110,12 +147,12 @@ macro_rules! impl_binop_assign {
             #[inline]
             fn $trait_method(&mut self, rhs: T) {
                 let rhs = rhs.into();
-                match (self.0, rhs.0) {
-                    (Some(ref mut $x), Some($y)) => {
+                match (self, rhs) {
+                    (&mut Valid(ref mut $x), Valid($y)) => {
                         *$x = $imp;
                     }
-                    (ref mut lhs, _) => {
-                        *lhs = None;
+                    (&mut ref mut lhs, _) => {
+                        *lhs = Invalid;
                     }
                 }
             }
@@ -264,6 +301,27 @@ mod tests {
             TaggedWord::invalid() + TaggedWord::invalid(),
             TaggedWord::invalid()
         );
+    }
+
+    #[test]
+    fn test_add_assign_valid() {
+        let mut word = TaggedWord::valid(1);
+        word += TaggedWord::valid(2);
+        assert_eq!(word, TaggedWord::valid(3));
+    }
+
+    #[test]
+    fn test_add_assign_invalid_valid() {
+        let mut word = TaggedWord::invalid();
+        word += TaggedWord::valid(2);
+        assert_eq!(word, TaggedWord::invalid());
+    }
+
+    #[test]
+    fn test_add_assign_valid_invalid() {
+        let mut word = TaggedWord::valid(1);
+        word += TaggedWord::invalid();
+        assert_eq!(word, TaggedWord::invalid());
     }
 
     #[test]
