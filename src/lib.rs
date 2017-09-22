@@ -10,8 +10,8 @@
 
 #[macro_use]
 extern crate cfg_if;
-extern crate gimli;
 extern crate findshlibs;
+extern crate gimli;
 
 mod control;
 pub mod error;
@@ -31,15 +31,14 @@ cfg_if! {
 
 pub use control::{AsUnwindControl, UnwindControl};
 pub use error::{Error, Result};
-pub use registers::FrameUnwindRegisters;
-pub use tagged_word::TaggedWord;
-
 use findshlibs::{Avma, Bias};
 use gimli::UnwindSection;
-use std::collections::HashMap;
+pub use registers::FrameUnwindRegisters;
 use std::cmp::Ordering;
+use std::collections::HashMap;
 use std::fmt;
 use std::ops::Range;
+pub use tagged_word::TaggedWord;
 
 /// TODO FITZGEN
 pub trait MemoryReader: fmt::Debug + Sized {
@@ -286,9 +285,7 @@ where
 
             self.ctx
                 .take()
-                .expect(
-                    "should always have Some(ctx) at the beginning of Self::unwind_one",
-                )
+                .expect("should always have Some(ctx) at the beginning of Self::unwind_one")
                 .initialize(entry.fde.cie())
                 .map_err(|(e, ctx)| (e.into(), ctx))
                 .and_then(|mut ctx| {
