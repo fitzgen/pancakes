@@ -1,11 +1,18 @@
 extern crate diff;
+extern crate pancakes;
 
+use pancakes::{FrameRegisters, Options, Registers};
+use std::env;
 use std::fs::File;
 use std::io::Read;
 use std::process::Command;
 
 #[test]
 fn cargo_readme_up_to_date() {
+    if env::var("CI").is_ok() {
+        return;
+    }
+
     let expected = Command::new("cargo")
         .arg("readme")
         .current_dir(env!("CARGO_MANIFEST_DIR"))
@@ -36,4 +43,38 @@ fn cargo_readme_up_to_date() {
         }
         panic!("Run `cargo readme > README.md` to update README.md")
     }
+}
+
+#[test]
+fn smoke_test_unwind() {
+    #[inline(never)]
+    fn one(walker: &mut pancakes::Walker) {
+        two(walker);
+    }
+
+    #[inline(never)]
+    fn two(walker: &mut pancakes::Walker) {
+        three(walker);
+    }
+
+    #[inline(never)]
+    fn three(walker: &mut pancakes::Walker) {
+        let walk_result = FrameRegisters::with_current(|regs| {
+            println!("start regs = {:#?}", regs);
+
+            walker.walk(regs, |frame| {
+                println!("FITZGEN: frame = {:#?}", frame);
+            })
+        });
+
+        panic!("temp: {:#?}", walk_result);
+    }
+
+    let mut opts = Options::new();
+    opts.find_eh_frame_entries()
+        .expect("should parse eh_frame entries OK");
+
+    let mut walker = opts.build();
+
+    one(&mut walker);
 }

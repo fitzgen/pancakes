@@ -1,12 +1,13 @@
 //! Machine words that are tagged valid or invalid.
 
 use error;
+use std::fmt;
 use std::mem;
 use std::num::Wrapping;
 use std::ops;
 
 /// A machine word that is tagged with whether it is valid or not.
-#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum TaggedWord {
     /// A valid word.
     Valid(usize),
@@ -19,6 +20,19 @@ use TaggedWord::*;
 impl Default for TaggedWord {
     fn default() -> TaggedWord {
         Invalid
+    }
+}
+
+impl fmt::Debug for TaggedWord {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Valid(w) => {
+                write!(f, "Valid({:#0p})", w as *const ())
+            }
+            Invalid => {
+                write!(f, "Invalid")
+            }
+        }
     }
 }
 

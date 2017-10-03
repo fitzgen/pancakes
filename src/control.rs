@@ -1,8 +1,8 @@
-//! Control flow for continuing or halting unwinding.
+//! Control flow for continuing or halting stack walking.
 
 /// Whether to continue unwinding or stop.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum UnwindControl {
+pub enum StackWalkControl {
     /// Continue unwinding.
     Continue,
 
@@ -10,32 +10,32 @@ pub enum UnwindControl {
     Break,
 }
 
-/// A trait for types that can be interpreted as an `UnwindControl`.
-pub trait AsUnwindControl {
-    /// Interpret this value as an `UnwindControl`.
-    fn as_unwind_control(&self) -> UnwindControl {
-        UnwindControl::Continue
+/// A trait for types that can be interpreted as an `StackWalkControl`.
+pub trait AsStackWalkControl {
+    /// Interpret this value as an `StackWalkControl`.
+    fn as_stack_walk_control(&self) -> StackWalkControl {
+        StackWalkControl::Continue
     }
 }
 
-impl AsUnwindControl for UnwindControl {
-    fn as_unwind_control(&self) -> UnwindControl {
+impl AsStackWalkControl for StackWalkControl {
+    fn as_stack_walk_control(&self) -> StackWalkControl {
         *self
     }
 }
 
-impl AsUnwindControl for () {
-    fn as_unwind_control(&self) -> UnwindControl {
-        UnwindControl::Continue
+impl AsStackWalkControl for () {
+    fn as_stack_walk_control(&self) -> StackWalkControl {
+        StackWalkControl::Continue
     }
 }
 
-impl<T, E> AsUnwindControl for Result<T, E> {
-    fn as_unwind_control(&self) -> UnwindControl {
+impl<T, E> AsStackWalkControl for Result<T, E> {
+    fn as_stack_walk_control(&self) -> StackWalkControl {
         if self.is_ok() {
-            UnwindControl::Continue
+            StackWalkControl::Continue
         } else {
-            UnwindControl::Break
+            StackWalkControl::Break
         }
     }
 }

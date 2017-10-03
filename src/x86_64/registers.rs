@@ -4,7 +4,10 @@
 // registers vs the minimal set respectively.
 
 use super::{Error, MemoryReader, Registers, Result, TaggedWord, TargetEndianBuf};
+use ffi;
 use gimli;
+use std::io;
+use std::mem;
 
 // From the Sys V x86_64 ABI, figure 3.36 DWARF Register Number
 // Mapping:
@@ -20,8 +23,8 @@ const SP: u8 = 7;
 const IP: u8 = 16;
 
 /// The registers needed to unwind a frame on x86.
-#[derive(Clone, Copy, Debug)]
-pub struct FrameUnwindRegisters {
+#[derive(Debug)]
+pub struct FrameRegisters {
     /// The `ebp`/`rbp` frame base register for this frame.
     bp: TaggedWord,
 
@@ -32,7 +35,7 @@ pub struct FrameUnwindRegisters {
     ip: TaggedWord,
 }
 
-impl FrameUnwindRegisters {
+impl FrameRegisters {
     fn get_register(&self, register_num: u8) -> Result<TaggedWord> {
         match register_num {
             r if r == BP => Ok(self.bp),
@@ -73,10 +76,10 @@ impl FrameUnwindRegisters {
     }
 }
 
-impl Registers for FrameUnwindRegisters {
+impl Registers for FrameRegisters {
     unsafe fn from_unwind_table_row<R>(
         row: &gimli::UnwindTableRow<TargetEndianBuf>,
-        old_registers: &FrameUnwindRegisters,
+        old_registers: &FrameRegisters,
         reader: &R
     ) -> Result<Self>
     where
@@ -95,11 +98,49 @@ impl Registers for FrameUnwindRegisters {
         let sp = old_registers.eval_register_rule(row.register(SP), cfa, reader);
         let ip = old_registers.eval_register_rule(row.register(IP), cfa, reader);
 
-        Ok(FrameUnwindRegisters {
+        Ok(FrameRegisters {
             bp,
             sp,
             ip,
         })
+    }
+
+    fn with_current<F, T>(mut f: F) -> Result<T>
+    where
+        F: FnMut(&Self) -> Result<T>
+    {
+        unsafe {
+            let mut registers: ffi::ucontext_t = mem::zeroed();
+
+            let r = ffi::getcontext(&mut registers);
+            if r != 0 {
+                return Err(Error::Io(io::Error::last_os_error()));
+            }
+
+            let registers = if cfg!(target_os = "macos") {
+                assert!(!registers.uc_mcontext.is_null());
+                let bp: u64 = (*registers.uc_mcontext).__ss.__rbp;
+                let sp: u64 = (*registers.uc_mcontext).__ss.__rsp;
+                let ip: u64 = (*registers.uc_mcontext).__ss.__rip;
+
+                debug_assert_eq!(
+                    mem::size_of::<u64>(),
+                    mem::size_of::<usize>(),
+                    "sanity check we didn't mess up configuration or something \
+                     and aren't about to truncate registers"
+                );
+
+                FrameRegisters {
+                    bp: TaggedWord::valid(bp as usize),
+                    sp: TaggedWord::valid(sp as usize),
+                    ip: TaggedWord::valid(ip as usize),
+                }
+            } else {
+                unimplemented!("TODO FITZGEN")
+            };
+
+            f(&registers)
+        }
     }
 
     fn bp(&self) -> TaggedWord { self.bp }
